@@ -105,6 +105,21 @@ Import-Csv ./ky-records.csv |
 
 Required option keys: `IsaSenderId`, `IsaReceiverId`, `GsSenderId`, `GsReceiverId`, `FilerCode`, `TaxpayerName`, `TaxpayerName2`, `Address`, `City`, `Region`, `PostalCode`, `Country`, `ContactName`, `Telephone`, `Fax`, `Email`, and `StateLicenseNumber`.
 
+## North Carolina
+
+North Carolina writes EDI. `FilerId`, `AccountId`, and the output filename are separate caller inputs so no company identity is hidden in either the content or path.
+
+```powershell
+$options = Get-Content ./nc-filing.json -Raw | ConvertFrom-Json -AsHashtable
+Import-Csv ./nc-records.csv |
+    ConvertTo-MotorFuelTaxFile `
+        -State NC -Period '202607' -FilerId '012345678' `
+        -GeneratedAt '2026-08-19T10:30:45-04:00' `
+        -StateOptions $options -OutputPath ./carrier-chosen-name.edi
+```
+
+Required option keys: `AccountId`, `FilerCode`, `TaxpayerName`, `Address`, `City`, `Region`, `PostalCode`, `Country`, `ContactName`, `Telephone`, `Fax`, and `Email`.
+
 ## Test
 
 ```powershell

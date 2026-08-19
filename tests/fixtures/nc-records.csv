@@ -1,0 +1,2 @@
+schedule,cmd_code,shipper.tcn,supplier.name,supplier.tax_id,consignor.name,consignor.tax_id,consignee.name,consignee.tax_id,consignee.state,consignee.city,bol,shipped,net,gross
+14B,065,T01NC0001,Synthetic Supplier,001122334,Synthetic Consignor,012345678,Synthetic Depot,000123456,NC,Raleigh,123456,2026-07-02T10:00:00-04:00,120,125

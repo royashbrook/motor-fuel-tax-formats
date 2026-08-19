@@ -278,6 +278,85 @@ function ConvertTo-KentuckyLines {
     "IEA~1~0$($GeneratedAt.ToString('yyyyMMdd'))\"
 }
 
+function ConvertTo-NorthCarolinaLines {
+    param(
+        [Parameter(Mandatory)] [object[]] $Records,
+        [Parameter(Mandatory)] [string] $Period,
+        [Parameter(Mandatory)] [string] $FilerId,
+        [Parameter(Mandatory)] [datetimeoffset] $GeneratedAt,
+        [Parameter(Mandatory)] [hashtable] $StateOptions
+    )
+
+    $dates = Get-FilingPeriodDates -Period $Period
+    $accountId = Get-RequiredOptionValue $StateOptions 'AccountId'
+    $filerCode = Get-RequiredOptionValue $StateOptions 'FilerCode'
+    $taxpayerName = Get-RequiredOptionValue $StateOptions 'TaxpayerName'
+    $address = Get-RequiredOptionValue $StateOptions 'Address'
+    $city = Get-RequiredOptionValue $StateOptions 'City'
+    $region = Get-RequiredOptionValue $StateOptions 'Region'
+    $postalCode = Get-RequiredOptionValue $StateOptions 'PostalCode'
+    $country = Get-RequiredOptionValue $StateOptions 'Country'
+    $contactName = Get-RequiredOptionValue $StateOptions 'ContactName'
+    $telephone = Get-RequiredOptionValue $StateOptions 'Telephone'
+    $fax = Get-RequiredOptionValue $StateOptions 'Fax'
+    $email = Get-RequiredOptionValue $StateOptions 'Email'
+    $sum = ($Records | Measure-Object 'net' -Sum).Sum
+    [int]$referenceNumber = 1
+
+    "ISA~00~          ~00~          ~ZZ~$($FilerId.PadRight(15))~ZZ~$('NCMOTORFUELS'.PadRight(15))~$($GeneratedAt.ToString('yyMMdd'))~$($GeneratedAt.ToString('HHmm'))~|~00403~0$($GeneratedAt.ToString('yyyyMMdd'))~0~P~^\"
+    "GS~TF~$FilerId~NCMOTORFUELS~$($GeneratedAt.ToString('yyyyMMdd'))~$($GeneratedAt.ToString('HHmmss'))~$($GeneratedAt.ToString('yyyyMMdd'))~X~004030\"
+    "ST~813~$($dates.Begin.ToString('yyyyMMdd'))~1.0\"
+    "BTI~T6~050~47~NCMOTORFUELS~$($GeneratedAt.ToString('yyyyMMdd'))~$filerCode~24~$FilerId~49~$accountId~SV~~00\"
+    "DTM~194~$($dates.End.ToString('yyyyMMdd'))\"
+    "TIA~5001~~~$sum~GA\"
+    "N1~TP~$taxpayerName\"
+    "N3~$address\"
+    "N4~$city~$region~$postalCode~$country\"
+    "PER~CN~$contactName~TE~$telephone~FX~$fax~EM~$email\"
+    "PER~EA~$contactName~TE~$telephone~FX~$fax~EM~$email\"
+    "TFS~T2~CCR\"
+    "REF~55~$referenceNumber\"
+    $referenceNumber++
+    "TIA~5004~0~~$sum~GA\"
+    [int]$segmentCount = 12
+    $keys = [Collections.Generic.HashSet[string]]::new()
+
+    foreach ($item in $Records) {
+        $key = @(
+            (Get-RequiredRecordValue $item 'shipper.tcn')
+            (Get-RequiredRecordValue $item 'consignor.tax_id')
+            (Get-RequiredRecordValue $item 'consignee.tax_id')
+            (Get-RequiredRecordValue $item 'cmd_code')
+        ) -join ','
+        if ($keys.Add($key)) {
+            "TFS~T3~$(Get-RequiredRecordValue $item 'schedule')~PG~$(Get-RequiredRecordValue $item 'cmd_code')~94~J \"
+            "REF~55~$referenceNumber\"
+            $referenceNumber++
+            "N1~OT~~TC~$(Get-RequiredRecordValue $item 'shipper.tcn')\"
+            "N1~SE~$(Get-RequiredRecordValue $item 'supplier.name')~24~$(Get-RequiredRecordValue $item 'supplier.tax_id')\"
+            "N1~CI~$(Get-RequiredRecordValue $item 'consignor.name')~24~$(Get-RequiredRecordValue $item 'consignor.tax_id')\"
+            "N1~CA~$taxpayerName~24~$FilerId\"
+            "N1~BY~$(Get-RequiredRecordValue $item 'consignee.name')~24~$(Get-RequiredRecordValue $item 'consignee.tax_id')\"
+            "N1~ST~$(Get-RequiredRecordValue $item 'consignee.state')\"
+            "N4~$(Get-RequiredRecordValue $item 'consignee.city')~$(Get-RequiredRecordValue $item 'consignee.state')\"
+            $segmentCount += 9
+        }
+        "FGS~D~BM~$(Get-RequiredRecordValue $item 'bol')\"
+        "REF~55~$referenceNumber\"
+        $referenceNumber++
+        "DTM~095~$(([datetime](Get-RequiredRecordValue $item 'shipped')).ToString('yyyyMMdd'))\"
+        "TIA~5005~~~$(Get-RequiredRecordValue $item 'net')~GA\"
+        "TIA~5006~~~$(Get-RequiredRecordValue $item 'gross')~GA\"
+        "TIA~5007~~~$(Get-RequiredRecordValue $item 'gross')~GA\"
+        $segmentCount += 6
+    }
+
+    $segmentCount++
+    "SE~$segmentCount~$($dates.Begin.ToString('yyyyMMdd'))\"
+    "GE~1~$($GeneratedAt.ToString('yyyyMMdd'))\"
+    "IEA~1~0$($GeneratedAt.ToString('yyyyMMdd'))\"
+}
+
 function ConvertTo-MotorFuelTaxFile {
     <#
     .SYNOPSIS
@@ -293,7 +372,7 @@ function ConvertTo-MotorFuelTaxFile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateSet('AL', 'FL', 'KY')]
+        [ValidateSet('AL', 'FL', 'KY', 'NC')]
         [string] $State,
 
         [Parameter(Mandatory)]
@@ -347,6 +426,12 @@ function ConvertTo-MotorFuelTaxFile {
                     throw "State KY requires GeneratedAt."
                 }
                 ConvertTo-KentuckyLines -Records $records -Period $Period -FilerId $FilerId -GeneratedAt $GeneratedAt -StateOptions $StateOptions
+            }
+            'NC' {
+                if (-not $PSBoundParameters.ContainsKey('GeneratedAt')) {
+                    throw "State NC requires GeneratedAt."
+                }
+                ConvertTo-NorthCarolinaLines -Records $records -Period $Period -FilerId $FilerId -GeneratedAt $GeneratedAt -StateOptions $StateOptions
             }
         }
 

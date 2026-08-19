@@ -8,6 +8,8 @@ BeforeAll {
     $alExpectedPath = Join-Path $PSScriptRoot 'fixtures/al-expected.xml'
     $kyRecordsPath = Join-Path $PSScriptRoot 'fixtures/ky-records.csv'
     $kyExpectedPath = Join-Path $PSScriptRoot 'fixtures/ky-expected.edi'
+    $ncRecordsPath = Join-Path $PSScriptRoot 'fixtures/nc-records.csv'
+    $ncExpectedPath = Join-Path $PSScriptRoot 'fixtures/nc-expected.edi'
     Import-Module $manifestPath -Force
 }
 
@@ -73,6 +75,25 @@ Describe 'MotorFuelTaxFormats module' {
 
         [Convert]::ToHexString([IO.File]::ReadAllBytes($outputPath)) |
             Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($kyExpectedPath)))
+    }
+
+    It 'writes the synthetic North Carolina golden file byte for byte' {
+        $outputPath = Join-Path $TestDrive 'nc-output.edi'
+        $options = @{
+            AccountId = '01234567801'; FilerCode = 'TEST'; TaxpayerName = 'Synthetic Carrier'
+            Address = '100 Test St'; City = 'Raleigh'; Region = 'NC'; PostalCode = '27601'; Country = 'US'
+            ContactName = 'Test Contact'; Telephone = '9195550100'; Fax = '9195550101'
+            Email = 'test@example.invalid'
+        }
+
+        Import-Csv $ncRecordsPath |
+            ConvertTo-MotorFuelTaxFile `
+                -State NC -Period '202607' -FilerId '012345678' `
+                -GeneratedAt '2026-08-19T10:30:45-04:00' `
+                -StateOptions $options -OutputPath $outputPath
+
+        [Convert]::ToHexString([IO.File]::ReadAllBytes($outputPath)) |
+            Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($ncExpectedPath)))
     }
 
     It 'contains no data-access, network, mail, or submission commands' {
