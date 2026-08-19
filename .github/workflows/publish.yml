@@ -1,0 +1,26 @@
+name: publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate release version
+        shell: pwsh
+        run: |
+          $manifest = Test-ModuleManifest ./MotorFuelTaxFormats/MotorFuelTaxFormats.psd1
+          if ($env:GITHUB_REF_NAME -ne "v$($manifest.Version)") {
+            throw "Release tag $env:GITHUB_REF_NAME does not match module version v$($manifest.Version)."
+          }
+      - name: Publish to PowerShell Gallery
+        shell: pwsh
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        run: Publish-Module -Path ./MotorFuelTaxFormats -Repository PSGallery -NuGetApiKey $env:PSGALLERY_API_KEY -Verbose
