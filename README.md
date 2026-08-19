@@ -21,7 +21,7 @@ This is a formatter, and only a formatter. It does not:
 
 It writes the file in the state's shape. Confirming that the file is right for your filing, against the current published state specification, is on you. See [License and warranty](#license-and-warranty).
 
-## Install the candidate
+## Install
 
 ```powershell
 Import-Module ./MotorFuelTaxFormats/MotorFuelTaxFormats.psd1
