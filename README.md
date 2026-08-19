@@ -1,7 +1,5 @@
 # MotorFuelTaxFormats
 
-> Private release candidate. Do not publish this repository or module until the remaining gates in issue #1 are closed.
-
 Turn a flat set of motor-fuel records into a state tax filing file. That is the whole job. This module starts after your data is extracted and stops before anything is filed, so it has no database, no network, no mail, no credentials, and no assumptions about where it runs.
 
 ## Why it is shaped this way
