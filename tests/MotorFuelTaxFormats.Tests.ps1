@@ -14,6 +14,8 @@ BeforeAll {
     $scExpectedPath = Join-Path $PSScriptRoot 'fixtures/sc-expected.xml'
     $vaRecordsPath = Join-Path $PSScriptRoot 'fixtures/va-records.csv'
     $vaExpectedPath = Join-Path $PSScriptRoot 'fixtures/va-expected.edi'
+    $tnRecordsPath = Join-Path $PSScriptRoot 'fixtures/tn-records.csv'
+    $tnExpectedPath = Join-Path $PSScriptRoot 'fixtures/tn-expected.csv'
     Import-Module $manifestPath -Force
 }
 
@@ -134,6 +136,33 @@ Describe 'MotorFuelTaxFormats module' {
 
         [Convert]::ToHexString([IO.File]::ReadAllBytes($outputPath)) |
             Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($vaExpectedPath)))
+    }
+
+    It 'writes Tennessee rows into a caller-supplied synthetic template' {
+        Import-Module ImportExcel -MinimumVersion 7.8.10
+        $templatePath = Join-Path $TestDrive 'tn-template.xlsx'
+        $outputPath = Join-Path $TestDrive 'tn-output.xlsx'
+        $package = Open-ExcelPackage -Path $templatePath -Create
+        $worksheet = Add-Worksheet -ExcelPackage $package -WorksheetName 'Synthetic Schedule'
+        $worksheet.Cells[1, 1].Value = 'Synthetic template marker'
+        Close-ExcelPackage -ExcelPackage $package
+
+        Import-Csv $tnRecordsPath |
+            ConvertTo-MotorFuelTaxFile `
+                -State TN -Period '202607' `
+                -TemplatePath $templatePath -OutputPath $outputPath
+
+        $output = Open-ExcelPackage -Path $outputPath
+        try {
+            $output.Workbook.Worksheets[1].Cells[1, 1].Value | Should -BeExactly 'Synthetic template marker'
+            $actual = 1..16 | ForEach-Object {
+                [Convert]::ToString($output.Workbook.Worksheets[1].Cells[4, $_].Value, [Globalization.CultureInfo]::InvariantCulture)
+            }
+            ($actual -join ',') | Should -BeExactly (Get-Content $tnExpectedPath -Raw).TrimEnd()
+        }
+        finally {
+            Close-ExcelPackage -ExcelPackage $output -NoSave
+        }
     }
 
     It 'contains no data-access, network, mail, or submission commands' {

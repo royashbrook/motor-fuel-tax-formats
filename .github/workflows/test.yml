@@ -20,4 +20,5 @@ jobs:
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module Pester -MinimumVersion 6.0.1 -Force -Scope CurrentUser
+          Install-Module ImportExcel -MinimumVersion 7.8.10 -Force -Scope CurrentUser
           Invoke-Pester -Path ./tests -CI

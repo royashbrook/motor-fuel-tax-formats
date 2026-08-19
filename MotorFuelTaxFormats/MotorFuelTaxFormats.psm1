@@ -494,6 +494,49 @@ function ConvertTo-VirginiaLines {
     "IEA~1~0$($GeneratedAt.ToString('yyyyMMdd'))\"
 }
 
+function ConvertTo-TennesseeWorkbook {
+    param(
+        [Parameter(Mandatory)] [object[]] $Records,
+        [Parameter(Mandatory)] [string] $TemplatePath,
+        [Parameter(Mandatory)] [string] $OutputPath
+    )
+
+    Import-Module ImportExcel -MinimumVersion 7.8.10 -ErrorAction Stop
+    Copy-Item -LiteralPath $TemplatePath -Destination $OutputPath -Force
+    $package = Open-ExcelPackage -Path ([IO.Path]::GetFullPath($OutputPath))
+    try {
+        $cells = $package.Workbook.Worksheets[1].Cells
+        [int]$row = 4
+        foreach ($item in $Records) {
+            $values = @(
+                (Get-RequiredRecordValue $item 'schedule')
+                (Get-RequiredRecordValue $item 'cmd_code')
+                (Get-RequiredRecordValue $item 'shipper.tcn')
+                (Get-RequiredRecordValue $item 'consignor.name')
+                (Get-RequiredRecordValue $item 'consignor.tax_id')
+                (Get-RequiredRecordValue $item 'supplier.name')
+                (Get-RequiredRecordValue $item 'supplier.tax_id')
+                'J - Truck'
+                (Get-RequiredRecordValue $item 'shipper.state')
+                (Get-RequiredRecordValue $item 'consignee.name')
+                (Get-RequiredRecordValue $item 'consignee.state')
+                (Get-RequiredRecordValue $item 'consignee.tax_id')
+                (Get-RequiredRecordValue $item 'delivered')
+                (Get-RequiredRecordValue $item 'bol')
+                (Get-RequiredRecordValue $item 'net')
+                (Get-RequiredRecordValue $item 'gross')
+            )
+            for ($column = 1; $column -le $values.Count; $column++) {
+                $cells[$row, $column].Value = $values[$column - 1]
+            }
+            $row++
+        }
+    }
+    finally {
+        Close-ExcelPackage -ExcelPackage $package
+    }
+}
+
 function ConvertTo-MotorFuelTaxFile {
     <#
     .SYNOPSIS
@@ -509,7 +552,7 @@ function ConvertTo-MotorFuelTaxFile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateSet('AL', 'FL', 'KY', 'NC', 'SC', 'VA')]
+        [ValidateSet('AL', 'FL', 'KY', 'NC', 'SC', 'TN', 'VA')]
         [string] $State,
 
         [Parameter(Mandatory)]
@@ -520,13 +563,14 @@ function ConvertTo-MotorFuelTaxFile {
         [ValidateNotNull()]
         [object[]] $Record,
 
-        [Parameter(Mandatory)]
         [ValidatePattern('^\d{9}$')]
         [string] $FilerId,
 
         [datetimeoffset] $GeneratedAt,
 
         [hashtable] $StateOptions = @{},
+
+        [string] $TemplatePath,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -546,6 +590,18 @@ function ConvertTo-MotorFuelTaxFile {
     end {
         if ($records.Count -eq 0) {
             throw 'At least one record is required.'
+        }
+
+        if ($State -eq 'TN') {
+            if (-not $PSBoundParameters.ContainsKey('TemplatePath')) {
+                throw 'State TN requires TemplatePath.'
+            }
+            ConvertTo-TennesseeWorkbook -Records $records -TemplatePath $TemplatePath -OutputPath $OutputPath
+            return
+        }
+
+        if (-not $PSBoundParameters.ContainsKey('FilerId')) {
+            throw "State $State requires FilerId."
         }
 
         [string[]] $lines = switch ($State) {

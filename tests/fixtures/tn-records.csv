@@ -1,0 +1,2 @@
+schedule,cmd_code,shipper.tcn,consignor.name,consignor.tax_id,supplier.name,supplier.tax_id,shipper.state,consignee.name,consignee.state,consignee.tax_id,delivered,bol,net,gross
+3A,065,T01TN0001,Synthetic Consignor,012345678,Synthetic Supplier,001122334,TN,Synthetic Depot,TN,000123456,2026-07-03T14:00:00-04:00,123456,120,125

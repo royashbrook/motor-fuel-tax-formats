@@ -15,7 +15,7 @@
     AliasesToExport = @()
     PrivateData = @{
         PSData = @{
-            Tags = @('MotorFuel', 'Tax', 'Alabama', 'Florida', 'Kentucky', 'NorthCarolina', 'SouthCarolina', 'Virginia', 'Formatter')
+            Tags = @('MotorFuel', 'Tax', 'Alabama', 'Florida', 'Kentucky', 'NorthCarolina', 'SouthCarolina', 'Tennessee', 'Virginia', 'Formatter')
             ProjectUri = 'https://github.com/royashbrook/motor-fuel-tax-formats'
         }
     }

@@ -150,6 +150,20 @@ Import-Csv ./va-records.csv |
 
 Required option keys: `IsaReceiverId`, `GsSenderId`, `GsReceiverId`, `FilerCode`, `AccountId`, `TaxpayerName`, `ContactName`, `Telephone`, `Fax`, and `Email`.
 
+## Tennessee
+
+Tennessee writes shipment rows into a workbook template. The state template is not distributed with this module; supply a template you are authorized to use. `ImportExcel` is loaded only when Tennessee is selected.
+
+```powershell
+Import-Csv ./tn-records.csv |
+    ConvertTo-MotorFuelTaxFile `
+        -State TN -Period '202607' `
+        -TemplatePath ./authorized-template.xlsx `
+        -OutputPath ./202607.xlsx
+```
+
+The first worksheet is preserved, and data starts at row 4 in the template's sixteen-column schedule layout. The caller owns both paths; no production template, filing identity, or filename is built into the module.
+
 ## Test
 
 ```powershell
