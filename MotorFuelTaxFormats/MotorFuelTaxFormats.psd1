@@ -1,6 +1,6 @@
 @{
     RootModule = 'MotorFuelTaxFormats.psm1'
-    ModuleVersion = '0.1.0'
+    ModuleVersion = '0.1.1'
     GUID = '6a1e2fff-325b-454a-ad42-d0676d2ad1c7'
     Author = 'Roy Ashbrook'
     Copyright = '(c) 2026 Roy Ashbrook. Licensed under the MIT License.'

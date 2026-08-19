@@ -291,6 +291,12 @@ function ConvertTo-NorthCarolinaLines {
     $accountId = Get-RequiredOptionValue $StateOptions 'AccountId'
     $filerCode = Get-RequiredOptionValue $StateOptions 'FilerCode'
     $taxpayerName = Get-RequiredOptionValue $StateOptions 'TaxpayerName'
+    $carrierName = if ($StateOptions.ContainsKey('CarrierName') -and -not [string]::IsNullOrWhiteSpace([string]$StateOptions['CarrierName'])) {
+        [string]$StateOptions['CarrierName']
+    }
+    else {
+        $taxpayerName
+    }
     $address = Get-RequiredOptionValue $StateOptions 'Address'
     $city = Get-RequiredOptionValue $StateOptions 'City'
     $region = Get-RequiredOptionValue $StateOptions 'Region'
@@ -335,7 +341,7 @@ function ConvertTo-NorthCarolinaLines {
             "N1~OT~~TC~$(Get-RequiredRecordValue $item 'shipper.tcn')\"
             "N1~SE~$(Get-RequiredRecordValue $item 'supplier.name')~24~$(Get-RequiredRecordValue $item 'supplier.tax_id')\"
             "N1~CI~$(Get-RequiredRecordValue $item 'consignor.name')~24~$(Get-RequiredRecordValue $item 'consignor.tax_id')\"
-            "N1~CA~$taxpayerName~24~$FilerId\"
+            "N1~CA~$carrierName~24~$FilerId\"
             "N1~BY~$(Get-RequiredRecordValue $item 'consignee.name')~24~$(Get-RequiredRecordValue $item 'consignee.tax_id')\"
             "N1~ST~$(Get-RequiredRecordValue $item 'consignee.state')\"
             "N4~$(Get-RequiredRecordValue $item 'consignee.city')~$(Get-RequiredRecordValue $item 'consignee.state')\"
@@ -503,7 +509,7 @@ function ConvertTo-TennesseeWorkbook {
 
     Import-Module ImportExcel -MinimumVersion 7.8.10 -ErrorAction Stop
     Copy-Item -LiteralPath $TemplatePath -Destination $OutputPath -Force
-    $package = Open-ExcelPackage -Path ([IO.Path]::GetFullPath($OutputPath))
+    $package = Open-ExcelPackage -Path $OutputPath
     try {
         $cells = $package.Workbook.Worksheets[1].Cells
         [int]$row = 4
@@ -592,11 +598,13 @@ function ConvertTo-MotorFuelTaxFile {
             throw 'At least one record is required.'
         }
 
+        $resolvedOutputPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
+
         if ($State -eq 'TN') {
             if (-not $PSBoundParameters.ContainsKey('TemplatePath')) {
                 throw 'State TN requires TemplatePath.'
             }
-            ConvertTo-TennesseeWorkbook -Records $records -TemplatePath $TemplatePath -OutputPath $OutputPath
+            ConvertTo-TennesseeWorkbook -Records $records -TemplatePath $TemplatePath -OutputPath $resolvedOutputPath
             return
         }
 
@@ -642,7 +650,7 @@ function ConvertTo-MotorFuelTaxFile {
 
         $contents = ($lines -join "`n") + "`n"
         [IO.File]::WriteAllText(
-            [IO.Path]::GetFullPath($OutputPath),
+            $resolvedOutputPath,
             $contents,
             [Text.UTF8Encoding]::new($false)
         )

@@ -102,6 +102,43 @@ Describe 'MotorFuelTaxFormats module' {
             Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($ncExpectedPath)))
     }
 
+    It 'allows North Carolina carrier and taxpayer names to differ' {
+        $outputPath = Join-Path $TestDrive 'nc-distinct-carrier.edi'
+        $options = @{
+            AccountId = '01234567801'; FilerCode = 'TEST'; TaxpayerName = 'Synthetic Carrier, Inc.'
+            CarrierName = 'Synthetic Carrier, INC.'
+            Address = '100 Test St'; City = 'Raleigh'; Region = 'NC'; PostalCode = '27601'; Country = 'US'
+            ContactName = 'Test Contact'; Telephone = '9195550100'; Fax = '9195550101'
+            Email = 'test@example.invalid'
+        }
+
+        Import-Csv $ncRecordsPath |
+            ConvertTo-MotorFuelTaxFile `
+                -State NC -Period '202607' -FilerId '012345678' `
+                -GeneratedAt '2026-08-19T10:30:45-04:00' `
+                -StateOptions $options -OutputPath $outputPath
+
+        $lines = Get-Content $outputPath
+        ($lines -ccontains 'N1~TP~Synthetic Carrier, Inc.\') | Should -BeTrue
+        ($lines -ccontains 'N1~CA~Synthetic Carrier, INC.~24~012345678\') | Should -BeTrue
+    }
+
+    It 'resolves a relative output path against the PowerShell current location' {
+        $originalLocation = Get-Location
+        try {
+            Set-Location $TestDrive
+            Import-Csv $recordsPath |
+                ConvertTo-MotorFuelTaxFile `
+                    -State FL -Period '202607' -FilerId '012345678' `
+                    -OutputPath ./relative-output.txt
+
+            Test-Path (Join-Path $TestDrive 'relative-output.txt') | Should -BeTrue
+        }
+        finally {
+            Set-Location $originalLocation
+        }
+    }
+
     It 'writes the synthetic South Carolina golden file byte for byte' {
         $outputPath = Join-Path $TestDrive 'sc-output.xml'
         $options = @{

@@ -117,7 +117,7 @@ Import-Csv ./nc-records.csv |
         -StateOptions $options -OutputPath ./carrier-chosen-name.edi
 ```
 
-Required option keys: `AccountId`, `FilerCode`, `TaxpayerName`, `Address`, `City`, `Region`, `PostalCode`, `Country`, `ContactName`, `Telephone`, `Fax`, and `Email`.
+Required option keys: `AccountId`, `FilerCode`, `TaxpayerName`, `Address`, `City`, `Region`, `PostalCode`, `Country`, `ContactName`, `Telephone`, `Fax`, and `Email`. Optional `CarrierName` overrides `TaxpayerName` only in the carrier segment when the state filing uses different values.
 
 ## South Carolina
 
