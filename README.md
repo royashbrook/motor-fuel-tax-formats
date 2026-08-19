@@ -90,6 +90,21 @@ Import-Csv ./al-records.csv |
 
 Only the XML formatter is present. SOAP submission, acknowledgements, filing-window controls, credentials, and email remain outside this module.
 
+## Kentucky
+
+Kentucky writes EDI. Supply the envelope, taxpayer, contact, and license values through `StateOptions`; none are built into the module.
+
+```powershell
+$options = Get-Content ./ky-filing.json -Raw | ConvertFrom-Json -AsHashtable
+Import-Csv ./ky-records.csv |
+    ConvertTo-MotorFuelTaxFile `
+        -State KY -Period '202607' -FilerId '012345678' `
+        -GeneratedAt '2026-08-19T10:30:45-04:00' `
+        -StateOptions $options -OutputPath ./202607.edi
+```
+
+Required option keys: `IsaSenderId`, `IsaReceiverId`, `GsSenderId`, `GsReceiverId`, `FilerCode`, `TaxpayerName`, `TaxpayerName2`, `Address`, `City`, `Region`, `PostalCode`, `Country`, `ContactName`, `Telephone`, `Fax`, `Email`, and `StateLicenseNumber`.
+
 ## Test
 
 ```powershell
