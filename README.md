@@ -31,7 +31,7 @@ Import-Module ./MotorFuelTaxFormats/MotorFuelTaxFormats.psd1
 
 ## Convert Florida records
 
-Florida is the first state supported, through the `ConvertTo-MotorFuelTaxFile` command.
+Florida and Alabama are supported through the `ConvertTo-MotorFuelTaxFile` command.
 
 ```powershell
 Import-Csv ./fl-records.csv |
@@ -68,6 +68,27 @@ A flat object with these properties. This is the boundary: whatever system you p
 | `net` | Net quantity, before Florida's tenfold conversion |
 
 Records are expected to have already passed your own validation and exception handling. This module formats what you give it.
+
+## Alabama
+
+Alabama writes XML and requires an explicit generation timestamp plus the non-secret transmitter values that used to live beside the private submission code:
+
+```powershell
+Import-Csv ./al-records.csv |
+    ConvertTo-MotorFuelTaxFile `
+        -State AL `
+        -Period '202607' `
+        -FilerId '012345678' `
+        -GeneratedAt '2026-08-19T10:30:45-04:00' `
+        -StateOptions @{
+            ProcessType = 'T'
+            Etin = '12345'
+            AgentIdentifier = 'XMLTRN'
+        } `
+        -OutputPath ./202607.xml
+```
+
+Only the XML formatter is present. SOAP submission, acknowledgements, filing-window controls, credentials, and email remain outside this module.
 
 ## Test
 

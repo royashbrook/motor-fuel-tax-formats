@@ -1,0 +1,52 @@
+<Transmission xsi:schemaLocation="http://www.irs.gov/efile ./ExtendedCommon/Transmission.xsd" xmlns="http://www.irs.gov/efile" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <TransmissionHeader recordCount="1">
+        <Jurisdiction>ALABAMA</Jurisdiction>
+        <TransmissionId>AL20260819103045</TransmissionId>
+        <Timestamp>2026-08-19T10:30:45-04:00</Timestamp>
+        <Transmitter>
+            <ETIN>12345</ETIN>
+        </Transmitter>
+        <ProcessType>T</ProcessType>
+        <AgentIdentifier>XMLTRN</AgentIdentifier>
+    </TransmissionHeader>
+    <MotorFuelsFiling>
+        <SubmissionId>ALMFET</SubmissionId>
+        <MotorFuelsHeader>
+            <Jurisdiction>AL</Jurisdiction>
+            <Timestamp>2026-08-19T10:30:45-04:00</Timestamp>
+            <TaxPeriodBeginDate>2026-07-01</TaxPeriodBeginDate>
+            <TaxPeriodEndDate>2026-07-31</TaxPeriodEndDate>
+            <TypeOfFiling>Original</TypeOfFiling>
+            <Filer>
+                <FEIN>012345678</FEIN>
+            </Filer>
+        </MotorFuelsHeader>
+        <CarrierReport reportUOM="Gallons" reportCurrency="USD">
+            <ReportID>TRPR</ReportID>
+           <CarrierSchedule>
+                <ScheduleCode>14B</ScheduleCode>
+                <ProductCode>065</ProductCode>
+                <Mode>J</Mode>
+                <DocumentNumber>123456</DocumentNumber>
+                <ReceivedShippedDate>2026-07-02</ReceivedShippedDate>
+                <Origin>
+                    <State>GA</State>
+                </Origin>
+                <Seller>
+                    <Name>Supplier Sons</Name>
+                    <FEIN>001122334</FEIN>
+                </Seller>
+                <DeliveredTo>
+                    <Name>Depot 1</Name>
+                    <Address>100 Test St</Address>
+                </DeliveredTo>
+                <Net>120</Net>
+                <DiversionNumber>TRPR1</DiversionNumber>
+                <Consignor>
+                    <Name>Acme Inc</Name>
+                    <FEIN>012345678</FEIN>
+                </Consignor>
+            </CarrierSchedule>
+       </CarrierReport>
+    </MotorFuelsFiling>
+</Transmission>

@@ -1,0 +1,2 @@
+schedule,cmd_code,bol,shipped,shipper.state,supplier.name,supplier.tax_id,consignee.name,consignee.address,net,consignor.name,consignor.tax_id
+14B,065,123456,2026-07-02T10:00:00-04:00,GA,Supplier & Sons,001122334,Depot #1,100 Test St.,120,"Acme, Inc.",012345678

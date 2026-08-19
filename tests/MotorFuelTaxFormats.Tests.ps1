@@ -4,6 +4,8 @@ BeforeAll {
     $modulePath = Join-Path $repoRoot 'MotorFuelTaxFormats/MotorFuelTaxFormats.psm1'
     $recordsPath = Join-Path $PSScriptRoot 'fixtures/fl-records.csv'
     $expectedPath = Join-Path $PSScriptRoot 'fixtures/fl-expected.txt'
+    $alRecordsPath = Join-Path $PSScriptRoot 'fixtures/al-records.csv'
+    $alExpectedPath = Join-Path $PSScriptRoot 'fixtures/al-expected.xml'
     Import-Module $manifestPath -Force
 }
 
@@ -34,7 +36,23 @@ Describe 'MotorFuelTaxFormats module' {
         } | Should -Throw '*must be exactly three*'
     }
 
+    It 'writes the synthetic Alabama golden file byte for byte' {
+        $outputPath = Join-Path $TestDrive 'al-output.xml'
+
+        Import-Csv $alRecordsPath |
+            ConvertTo-MotorFuelTaxFile `
+                -State AL `
+                -Period '202607' `
+                -FilerId '012345678' `
+                -GeneratedAt '2026-08-19T10:30:45-04:00' `
+                -StateOptions @{ ProcessType = 'T'; Etin = '12345'; AgentIdentifier = 'XMLTRN' } `
+                -OutputPath $outputPath
+
+        [Convert]::ToHexString([IO.File]::ReadAllBytes($outputPath)) |
+            Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($alExpectedPath)))
+    }
+
     It 'contains no data-access, network, mail, or submission commands' {
-        Get-Content $modulePath -Raw | Should -Not -Match '(?i)Invoke-Sqlcmd|Invoke-RestMethod|Invoke-WebRequest|Send-Mail|Send-Mg|Publish-'
+        Get-Content $modulePath -Raw | Should -Not -Match '(?i)Invoke-Sqlcmd|Invoke-RestMethod|Invoke-WebRequest|New-WebServiceProxy|Send-Mail|Send-Mg|Publish-'
     }
 }
