@@ -14,11 +14,11 @@ Describe 'MotorFuelTaxFormats module' {
         $manifest.ExportedFunctions.Keys | Should -Be @('ConvertTo-MotorFuelTaxFile')
     }
 
-    It 'writes the synthetic Florida golden file byte for byte' {
+    It 'uses the explicit period and writes the Florida golden file byte for byte' {
         $outputPath = Join-Path $TestDrive 'fl-output.txt'
 
         Import-Csv $recordsPath |
-            ConvertTo-MotorFuelTaxFile -State FL -FilerId '012345678' -OutputPath $outputPath
+            ConvertTo-MotorFuelTaxFile -State FL -Period '202607' -FilerId '012345678' -OutputPath $outputPath
 
         [Convert]::ToHexString([IO.File]::ReadAllBytes($outputPath)) |
             Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($expectedPath)))
@@ -30,7 +30,7 @@ Describe 'MotorFuelTaxFormats module' {
         $outputPath = Join-Path $TestDrive 'invalid.txt'
 
         {
-            $record | ConvertTo-MotorFuelTaxFile -State FL -FilerId '012345678' -OutputPath $outputPath
+            $record | ConvertTo-MotorFuelTaxFile -State FL -Period '202607' -FilerId '012345678' -OutputPath $outputPath
         } | Should -Throw '*must be exactly three*'
     }
 

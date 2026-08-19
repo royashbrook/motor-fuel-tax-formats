@@ -1,6 +1,6 @@
 # MotorFuelTaxFormats
 
-> Private release candidate. Do not publish this repository or module until the credential-rotation and liability-review gates in issue #1 are closed.
+> Private release candidate. Do not publish this repository or module until the remaining gates in issue #1 are closed.
 
 Turn a flat set of motor-fuel records into a state tax filing file. That is the whole job. This module starts after your data is extracted and stops before anything is filed, so it has no database, no network, no mail, no credentials, and no assumptions about where it runs.
 
@@ -37,11 +37,12 @@ Florida is the first state supported, through the `ConvertTo-MotorFuelTaxFile` c
 Import-Csv ./fl-records.csv |
     ConvertTo-MotorFuelTaxFile `
         -State FL `
+        -Period '202607' `
         -FilerId '012345678' `
         -OutputPath ./202607.txt
 ```
 
-The command writes UTF-8 with no byte-order mark and LF line endings on every platform. The filing period is the year and month of the latest `shipped` value.
+The command writes UTF-8 with no byte-order mark and LF line endings on every platform. `-Period` is the filing period in `yyyyMM` form. It is explicit because the filing period belongs to the return, not to any one shipment timestamp.
 
 Everything that identifies you (your filer id, and anything customer-specific in the records) is passed in. Nothing about any particular company is baked into this module.
 
@@ -61,7 +62,7 @@ A flat object with these properties. This is the boundary: whatever system you p
 | `consignee.dep` | Florida destination facility number |
 | `consignee.name` | Consignee name |
 | `consignee.tax_id` | Consignee tax identifier |
-| `shipped` | Shipment timestamp |
+| `shipped` | Shipment timestamp; never used to infer the filing period |
 | `delivered` | Delivery timestamp |
 | `bol` | Bill-of-lading number |
 | `net` | Net quantity, before Florida's tenfold conversion |

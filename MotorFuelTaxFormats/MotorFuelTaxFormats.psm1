@@ -37,13 +37,17 @@ function ConvertTo-MotorFuelTaxFile {
     The command performs no data access, network calls, submission, or configuration lookup.
 
     .EXAMPLE
-    Import-Csv ./fl-records.csv | ConvertTo-MotorFuelTaxFile -State FL -FilerId 012345678 -OutputPath ./202607.txt
+    Import-Csv ./fl-records.csv | ConvertTo-MotorFuelTaxFile -State FL -Period '202607' -FilerId '012345678' -OutputPath ./202607.txt
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [ValidateSet('FL')]
         [string] $State,
+
+        [Parameter(Mandatory)]
+        [ValidatePattern('^\d{6}$')]
+        [string] $Period,
 
         [Parameter(Mandatory, ValueFromPipeline)]
         [ValidateNotNull()]
@@ -73,14 +77,6 @@ function ConvertTo-MotorFuelTaxFile {
             throw 'At least one record is required.'
         }
 
-        $lastRecord = $records |
-            Sort-Object { [datetime](Get-RequiredRecordValue -Record $_ -Name 'shipped') } |
-            Select-Object -Last 1
-        $period = ([datetime](Get-RequiredRecordValue -Record $lastRecord -Name 'shipped')).ToString(
-            'yyyyMM',
-            [Globalization.CultureInfo]::InvariantCulture
-        )
-
         [string[]] $lines = foreach ($item in $records) {
             $product = [string](Get-RequiredRecordValue -Record $item -Name 'cmd_code')
             if ($product -notmatch '^[A-Za-z0-9]{3}$') {
@@ -91,7 +87,7 @@ function ConvertTo-MotorFuelTaxFile {
             $gallons = [int64](Get-RequiredRecordValue -Record $item -Name 'net') * 10
             $values = @(
                 $FilerId
-                $period
+                $Period
                 (Get-RequiredRecordValue -Record $item -Name 'schedule')
                 $product
                 '0'
