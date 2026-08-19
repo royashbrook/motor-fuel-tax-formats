@@ -357,6 +357,82 @@ function ConvertTo-NorthCarolinaLines {
     "IEA~1~0$($GeneratedAt.ToString('yyyyMMdd'))\"
 }
 
+function ConvertTo-SouthCarolinaLines {
+    param(
+        [Parameter(Mandatory)] [object[]] $Records,
+        [Parameter(Mandatory)] [string] $Period,
+        [Parameter(Mandatory)] [string] $FilerId,
+        [Parameter(Mandatory)] [datetimeoffset] $GeneratedAt,
+        [Parameter(Mandatory)] [hashtable] $StateOptions
+    )
+
+    $dates = Get-FilingPeriodDates -Period $Period
+    $softwareId = Get-RequiredOptionValue $StateOptions 'SoftwareId'
+    $softwareVersion = Get-RequiredOptionValue $StateOptions 'SoftwareVersion'
+    $typeOfFiling = Get-RequiredOptionValue $StateOptions 'TypeOfFiling'
+    $stateLicenseNumber = Get-RequiredOptionValue $StateOptions 'StateLicenseNumber'
+    $filerName = Get-RequiredOptionValue $StateOptions 'FilerName'
+    $timestamp = $GeneratedAt.ToString('yyyy-MM-ddTHH:mm:sszzz')
+    $sum = ($Records | Measure-Object 'gross' -Sum).Sum
+
+    '<?xml version="1.0" encoding="UTF-8"?>'
+    '<MotorFuelsFiling xmlns="http://www.irs.gov/efile" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+    "    <SubmissionId>$softwareId$Period</SubmissionId>"
+    '    <MotorFuelsHeader>'
+    '        <Jurisdiction>SC</Jurisdiction>'
+    "        <Timestamp>$timestamp</Timestamp>"
+    "        <TaxPeriodBeginDate>$($dates.Begin.ToString('yyyy-MM-dd'))</TaxPeriodBeginDate>"
+    "        <TaxPeriodEndDate>$($dates.End.ToString('yyyy-MM-dd'))</TaxPeriodEndDate>"
+    "        <SoftwareId>$softwareId</SoftwareId>"
+    "        <SoftwareVersion>$softwareVersion</SoftwareVersion>"
+    if ($typeOfFiling -eq 'Amended') {
+        '        <AmendedReturnIndicator>X</AmendedReturnIndicator>'
+    }
+    '        <Filer>'
+    "            <FEIN>$FilerId</FEIN>"
+    "            <StateLicenseNumber>$stateLicenseNumber</StateLicenseNumber>"
+    "            <Name>$(ConvertTo-AlabamaField $filerName 50)</Name>"
+    '        </Filer>'
+    '    </MotorFuelsHeader>'
+    '    <CarrierReport reportUOM="Gallons" reportCurrency="USD">'
+
+    foreach ($item in $Records) {
+        '        <CarrierSchedule>'
+        "            <ScheduleCode>$(Get-RequiredRecordValue $item 'schedule')</ScheduleCode>"
+        "            <ProductCode>$(Get-RequiredRecordValue $item 'cmd_code')</ProductCode>"
+        '            <Mode>J</Mode>'
+        "            <DocumentNumber>$(Get-RequiredRecordValue $item 'bol')</DocumentNumber>"
+        "            <ReceivedShippedDate>$(([datetime](Get-RequiredRecordValue $item 'shipped')).ToString('yyyy-MM-dd'))</ReceivedShippedDate>"
+        $terminalCode = [string](Get-RequiredRecordValue $item 'shipper.tcn')
+        if ($terminalCode -match '^T[0-9]{2}[A-Za-z]{2}[0-9]{4}$') {
+            "            <Origin><TerminalCode>$($terminalCode.ToUpper())</TerminalCode></Origin>"
+        }
+        else {
+            "            <Origin><State>$(Get-RequiredRecordValue $item 'shipper.state')</State></Origin>"
+        }
+        "            <Destination><State>$(Get-RequiredRecordValue $item 'consignee.state')</State></Destination>"
+        '            <Seller>'
+        "                <FEIN>$(Get-RequiredRecordValue $item 'supplier.tax_id')</FEIN>"
+        "                <Name>$(ConvertTo-AlabamaField (Get-RequiredRecordValue $item 'supplier.name') 50)</Name>"
+        '            </Seller>'
+        '            <DeliveredTo>'
+        "                <FEIN>$(Get-RequiredRecordValue $item 'consignee.tax_id')</FEIN>"
+        "                <Name>$(ConvertTo-AlabamaField (Get-RequiredRecordValue $item 'consignee.name') 50)</Name>"
+        '            </DeliveredTo>'
+        "            <Net>$(Get-RequiredRecordValue $item 'net')</Net>"
+        "            <Gross>$(Get-RequiredRecordValue $item 'gross')</Gross>"
+        '            <Consignor>'
+        "                <FEIN>$(Get-RequiredRecordValue $item 'consignor.tax_id')</FEIN>"
+        "                <Name>$(ConvertTo-AlabamaField (Get-RequiredRecordValue $item 'consignor.name') 50)</Name>"
+        '            </Consignor>'
+        '        </CarrierSchedule>'
+    }
+
+    "        <TotalQuantityTransported>$sum</TotalQuantityTransported>"
+    '    </CarrierReport>'
+    '</MotorFuelsFiling>'
+}
+
 function ConvertTo-MotorFuelTaxFile {
     <#
     .SYNOPSIS
@@ -372,7 +448,7 @@ function ConvertTo-MotorFuelTaxFile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateSet('AL', 'FL', 'KY', 'NC')]
+        [ValidateSet('AL', 'FL', 'KY', 'NC', 'SC')]
         [string] $State,
 
         [Parameter(Mandatory)]
@@ -432,6 +508,12 @@ function ConvertTo-MotorFuelTaxFile {
                     throw "State NC requires GeneratedAt."
                 }
                 ConvertTo-NorthCarolinaLines -Records $records -Period $Period -FilerId $FilerId -GeneratedAt $GeneratedAt -StateOptions $StateOptions
+            }
+            'SC' {
+                if (-not $PSBoundParameters.ContainsKey('GeneratedAt')) {
+                    throw "State SC requires GeneratedAt."
+                }
+                ConvertTo-SouthCarolinaLines -Records $records -Period $Period -FilerId $FilerId -GeneratedAt $GeneratedAt -StateOptions $StateOptions
             }
         }
 

@@ -1,0 +1,2 @@
+schedule,cmd_code,bol,shipped,shipper.tcn,shipper.state,consignee.state,supplier.name,supplier.tax_id,consignee.name,consignee.tax_id,net,gross,consignor.name,consignor.tax_id
+14B,065,123456,2026-07-02T10:00:00-04:00,T57SC2060,GA,SC,Supplier & Sons,001122334,Depot #1,000123456,120,125,"Acme, Inc.",012345678

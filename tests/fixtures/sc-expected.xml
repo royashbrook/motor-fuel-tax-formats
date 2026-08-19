@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MotorFuelsFiling xmlns="http://www.irs.gov/efile" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SubmissionId>TESTSOFT202607</SubmissionId>
+    <MotorFuelsHeader>
+        <Jurisdiction>SC</Jurisdiction>
+        <Timestamp>2026-08-19T10:30:45-04:00</Timestamp>
+        <TaxPeriodBeginDate>2026-07-01</TaxPeriodBeginDate>
+        <TaxPeriodEndDate>2026-07-31</TaxPeriodEndDate>
+        <SoftwareId>TESTSOFT</SoftwareId>
+        <SoftwareVersion>1.0</SoftwareVersion>
+        <Filer>
+            <FEIN>012345678</FEIN>
+            <StateLicenseNumber>SC12345</StateLicenseNumber>
+            <Name>Synthetic Carrier</Name>
+        </Filer>
+    </MotorFuelsHeader>
+    <CarrierReport reportUOM="Gallons" reportCurrency="USD">
+        <CarrierSchedule>
+            <ScheduleCode>14B</ScheduleCode>
+            <ProductCode>065</ProductCode>
+            <Mode>J</Mode>
+            <DocumentNumber>123456</DocumentNumber>
+            <ReceivedShippedDate>2026-07-02</ReceivedShippedDate>
+            <Origin><TerminalCode>T57SC2060</TerminalCode></Origin>
+            <Destination><State>SC</State></Destination>
+            <Seller>
+                <FEIN>001122334</FEIN>
+                <Name>Supplier Sons</Name>
+            </Seller>
+            <DeliveredTo>
+                <FEIN>000123456</FEIN>
+                <Name>Depot 1</Name>
+            </DeliveredTo>
+            <Net>120</Net>
+            <Gross>125</Gross>
+            <Consignor>
+                <FEIN>012345678</FEIN>
+                <Name>Acme Inc</Name>
+            </Consignor>
+        </CarrierSchedule>
+        <TotalQuantityTransported>125</TotalQuantityTransported>
+    </CarrierReport>
+</MotorFuelsFiling>

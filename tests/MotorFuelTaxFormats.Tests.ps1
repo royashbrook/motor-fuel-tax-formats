@@ -10,6 +10,8 @@ BeforeAll {
     $kyExpectedPath = Join-Path $PSScriptRoot 'fixtures/ky-expected.edi'
     $ncRecordsPath = Join-Path $PSScriptRoot 'fixtures/nc-records.csv'
     $ncExpectedPath = Join-Path $PSScriptRoot 'fixtures/nc-expected.edi'
+    $scRecordsPath = Join-Path $PSScriptRoot 'fixtures/sc-records.csv'
+    $scExpectedPath = Join-Path $PSScriptRoot 'fixtures/sc-expected.xml'
     Import-Module $manifestPath -Force
 }
 
@@ -94,6 +96,23 @@ Describe 'MotorFuelTaxFormats module' {
 
         [Convert]::ToHexString([IO.File]::ReadAllBytes($outputPath)) |
             Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($ncExpectedPath)))
+    }
+
+    It 'writes the synthetic South Carolina golden file byte for byte' {
+        $outputPath = Join-Path $TestDrive 'sc-output.xml'
+        $options = @{
+            SoftwareId = 'TESTSOFT'; SoftwareVersion = '1.0'; TypeOfFiling = 'Original'
+            StateLicenseNumber = 'SC12345'; FilerName = 'Synthetic Carrier'
+        }
+
+        Import-Csv $scRecordsPath |
+            ConvertTo-MotorFuelTaxFile `
+                -State SC -Period '202607' -FilerId '012345678' `
+                -GeneratedAt '2026-08-19T10:30:45-04:00' `
+                -StateOptions $options -OutputPath $outputPath
+
+        [Convert]::ToHexString([IO.File]::ReadAllBytes($outputPath)) |
+            Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($scExpectedPath)))
     }
 
     It 'contains no data-access, network, mail, or submission commands' {

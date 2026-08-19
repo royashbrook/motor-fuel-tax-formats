@@ -120,6 +120,21 @@ Import-Csv ./nc-records.csv |
 
 Required option keys: `AccountId`, `FilerCode`, `TaxpayerName`, `Address`, `City`, `Region`, `PostalCode`, `Country`, `ContactName`, `Telephone`, `Fax`, and `Email`.
 
+## South Carolina
+
+South Carolina writes XML. Software and filer identity are caller-supplied; terminal origins use `shipper.tcn` only when it matches the state's terminal-code shape.
+
+```powershell
+$options = Get-Content ./sc-filing.json -Raw | ConvertFrom-Json -AsHashtable
+Import-Csv ./sc-records.csv |
+    ConvertTo-MotorFuelTaxFile `
+        -State SC -Period '202607' -FilerId '012345678' `
+        -GeneratedAt '2026-08-19T10:30:45-04:00' `
+        -StateOptions $options -OutputPath ./202607.xml
+```
+
+Required option keys: `SoftwareId`, `SoftwareVersion`, `TypeOfFiling`, `StateLicenseNumber`, and `FilerName`.
+
 ## Test
 
 ```powershell
