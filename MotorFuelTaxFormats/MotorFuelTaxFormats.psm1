@@ -433,6 +433,67 @@ function ConvertTo-SouthCarolinaLines {
     '</MotorFuelsFiling>'
 }
 
+function ConvertTo-VirginiaLines {
+    param(
+        [Parameter(Mandatory)] [object[]] $Records,
+        [Parameter(Mandatory)] [string] $Period,
+        [Parameter(Mandatory)] [string] $FilerId,
+        [Parameter(Mandatory)] [datetimeoffset] $GeneratedAt,
+        [Parameter(Mandatory)] [hashtable] $StateOptions
+    )
+
+    $dates = Get-FilingPeriodDates -Period $Period
+    $isaReceiverId = Get-RequiredOptionValue $StateOptions 'IsaReceiverId'
+    $gsSenderId = Get-RequiredOptionValue $StateOptions 'GsSenderId'
+    $gsReceiverId = Get-RequiredOptionValue $StateOptions 'GsReceiverId'
+    $filerCode = Get-RequiredOptionValue $StateOptions 'FilerCode'
+    $accountId = Get-RequiredOptionValue $StateOptions 'AccountId'
+    $taxpayerName = Get-RequiredOptionValue $StateOptions 'TaxpayerName'
+    $contactName = Get-RequiredOptionValue $StateOptions 'ContactName'
+    $telephone = Get-RequiredOptionValue $StateOptions 'Telephone'
+    $fax = Get-RequiredOptionValue $StateOptions 'Fax'
+    $email = Get-RequiredOptionValue $StateOptions 'Email'
+
+    "ISA~00~          ~00~          ~ZZ~$($FilerId.PadRight(15))~ZZ~$($isaReceiverId.PadRight(15))~$($GeneratedAt.ToString('yyMMdd'))~$($GeneratedAt.ToString('HHmm'))~|~00403~0$($GeneratedAt.ToString('yyyyMMdd'))~0~P~^\"
+    "GS~TF~$gsSenderId~$gsReceiverId~$($GeneratedAt.ToString('yyyyMMdd'))~$($GeneratedAt.ToString('HHmmss'))~$($GeneratedAt.ToString('yyyyMMdd'))~X~004030\"
+    "ST~813~$($dates.Begin.ToString('yyyyMMdd'))~9.0\"
+    "BTI~T6~TR~47~VA~$($GeneratedAt.ToString('yyyyMMdd'))~$filerCode~24~$FilerId~49~$accountId~~~00\"
+    "DTM~194~$($dates.End.ToString('yyyyMMdd'))\"
+    "N1~TP~$taxpayerName\"
+    "PER~CN~$contactName~TE~$telephone~FX~$fax~EM~$email\"
+    "PER~EA~$contactName~TE~$telephone~FX~$fax~EM~$email\"
+    "TFS~T2~CCR\"
+    [int]$segmentCount = 8
+    $keys = [Collections.Generic.HashSet[string]]::new()
+
+    foreach ($item in $Records) {
+        $key = @(
+            (Get-RequiredRecordValue $item 'shipper.tcn')
+            (Get-RequiredRecordValue $item 'consignor.tax_id')
+            (Get-RequiredRecordValue $item 'consignee.tax_id')
+            (Get-RequiredRecordValue $item 'cmd_code')
+        ) -join ','
+        if ($keys.Add($key)) {
+            "TFS~T3~$(Get-RequiredRecordValue $item 'schedule')~PG~$(Get-RequiredRecordValue $item 'cmd_code')~94~J \"
+            "N1~OT~~TC~$(Get-RequiredRecordValue $item 'shipper.tcn')\"
+            "N1~CI~$(Get-RequiredRecordValue $item 'consignor.name')~24~$(Get-RequiredRecordValue $item 'consignor.tax_id')\"
+            "N1~BY~$(Get-RequiredRecordValue $item 'consignee.name')~24~$(Get-RequiredRecordValue $item 'consignee.tax_id')\"
+            "N1~ST~$(Get-RequiredRecordValue $item 'consignee.state')\"
+            "N4~$(Get-RequiredRecordValue $item 'consignee.city')~$(Get-RequiredRecordValue $item 'consignee.state')~$(Get-RequiredRecordValue $item 'consignee.zip')\"
+            $segmentCount += 6
+        }
+        "FGS~D~BM~$(Get-RequiredRecordValue $item 'bol')\"
+        "DTM~095~$(([datetime](Get-RequiredRecordValue $item 'shipped')).ToString('yyyyMMdd'))\"
+        "TIA~5005~~~$(Get-RequiredRecordValue $item 'net')~GA\"
+        "TIA~5006~~~$(Get-RequiredRecordValue $item 'gross')~GA\"
+        $segmentCount += 4
+    }
+
+    "SE~$segmentCount~$($dates.Begin.ToString('yyyyMMdd'))\"
+    "GE~1~$($GeneratedAt.ToString('yyyyMMdd'))\"
+    "IEA~1~0$($GeneratedAt.ToString('yyyyMMdd'))\"
+}
+
 function ConvertTo-MotorFuelTaxFile {
     <#
     .SYNOPSIS
@@ -448,7 +509,7 @@ function ConvertTo-MotorFuelTaxFile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateSet('AL', 'FL', 'KY', 'NC', 'SC')]
+        [ValidateSet('AL', 'FL', 'KY', 'NC', 'SC', 'VA')]
         [string] $State,
 
         [Parameter(Mandatory)]
@@ -514,6 +575,12 @@ function ConvertTo-MotorFuelTaxFile {
                     throw "State SC requires GeneratedAt."
                 }
                 ConvertTo-SouthCarolinaLines -Records $records -Period $Period -FilerId $FilerId -GeneratedAt $GeneratedAt -StateOptions $StateOptions
+            }
+            'VA' {
+                if (-not $PSBoundParameters.ContainsKey('GeneratedAt')) {
+                    throw "State VA requires GeneratedAt."
+                }
+                ConvertTo-VirginiaLines -Records $records -Period $Period -FilerId $FilerId -GeneratedAt $GeneratedAt -StateOptions $StateOptions
             }
         }
 

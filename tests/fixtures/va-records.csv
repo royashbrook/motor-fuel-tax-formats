@@ -1,0 +1,2 @@
+schedule,cmd_code,shipper.tcn,consignor.name,consignor.tax_id,consignee.name,consignee.tax_id,consignee.state,consignee.city,consignee.zip,bol,shipped,net,gross
+14B,065,T01VA0001,Synthetic Consignor,012345678,Synthetic Depot,000123456,VA,Richmond,23219,123456,2026-07-02T10:00:00-04:00,120,125

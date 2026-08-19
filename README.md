@@ -31,7 +31,7 @@ Import-Module ./MotorFuelTaxFormats/MotorFuelTaxFormats.psd1
 
 ## Convert Florida records
 
-Florida and Alabama are supported through the `ConvertTo-MotorFuelTaxFile` command.
+All supported states use the `ConvertTo-MotorFuelTaxFile` command.
 
 ```powershell
 Import-Csv ./fl-records.csv |
@@ -134,6 +134,21 @@ Import-Csv ./sc-records.csv |
 ```
 
 Required option keys: `SoftwareId`, `SoftwareVersion`, `TypeOfFiling`, `StateLicenseNumber`, and `FilerName`.
+
+## Virginia
+
+Virginia writes EDI. Its envelope, account, taxpayer, and contact identifiers are caller-supplied, and the caller owns the output filename.
+
+```powershell
+$options = Get-Content ./va-filing.json -Raw | ConvertFrom-Json -AsHashtable
+Import-Csv ./va-records.csv |
+    ConvertTo-MotorFuelTaxFile `
+        -State VA -Period '202607' -FilerId '012345678' `
+        -GeneratedAt '2026-08-19T10:30:45-04:00' `
+        -StateOptions $options -OutputPath ./carrier-chosen-name.edi
+```
+
+Required option keys: `IsaReceiverId`, `GsSenderId`, `GsReceiverId`, `FilerCode`, `AccountId`, `TaxpayerName`, `ContactName`, `Telephone`, `Fax`, and `Email`.
 
 ## Test
 

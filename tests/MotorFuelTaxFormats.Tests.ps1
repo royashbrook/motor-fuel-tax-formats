@@ -12,6 +12,8 @@ BeforeAll {
     $ncExpectedPath = Join-Path $PSScriptRoot 'fixtures/nc-expected.edi'
     $scRecordsPath = Join-Path $PSScriptRoot 'fixtures/sc-records.csv'
     $scExpectedPath = Join-Path $PSScriptRoot 'fixtures/sc-expected.xml'
+    $vaRecordsPath = Join-Path $PSScriptRoot 'fixtures/va-records.csv'
+    $vaExpectedPath = Join-Path $PSScriptRoot 'fixtures/va-expected.edi'
     Import-Module $manifestPath -Force
 }
 
@@ -113,6 +115,25 @@ Describe 'MotorFuelTaxFormats module' {
 
         [Convert]::ToHexString([IO.File]::ReadAllBytes($outputPath)) |
             Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($scExpectedPath)))
+    }
+
+    It 'writes the synthetic Virginia golden file byte for byte' {
+        $outputPath = Join-Path $TestDrive 'va-output.edi'
+        $options = @{
+            IsaReceiverId = 'ETRACS'; GsSenderId = 'VA062013'; GsReceiverId = 'ETRACS'
+            FilerCode = 'TEST'; AccountId = '01234567801'; TaxpayerName = 'Synthetic Carrier'
+            ContactName = 'Test Contact'; Telephone = '8045550100'; Fax = '8045550101'
+            Email = 'test@example.invalid'
+        }
+
+        Import-Csv $vaRecordsPath |
+            ConvertTo-MotorFuelTaxFile `
+                -State VA -Period '202607' -FilerId '012345678' `
+                -GeneratedAt '2026-08-19T10:30:45-04:00' `
+                -StateOptions $options -OutputPath $outputPath
+
+        [Convert]::ToHexString([IO.File]::ReadAllBytes($outputPath)) |
+            Should -BeExactly ([Convert]::ToHexString([IO.File]::ReadAllBytes($vaExpectedPath)))
     }
 
     It 'contains no data-access, network, mail, or submission commands' {
