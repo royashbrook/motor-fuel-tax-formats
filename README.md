@@ -176,4 +176,4 @@ Every fixture in this repository is synthetic. Real customer records and real fi
 
 This is a reference implementation of the file formats, published so other carriers do not have to reverse-engineer them. It is provided as-is, with no warranty, and it is not tax or legal advice. Always verify the output against the current published specification for the state you are filing in before you rely on it.
 
-License: to be selected before public release (see issue #1).
+Licensed under the [MIT License](LICENSE).
