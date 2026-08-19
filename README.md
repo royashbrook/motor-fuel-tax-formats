@@ -24,7 +24,8 @@ It writes the file in the state's shape. Confirming that the file is right for y
 ## Install
 
 ```powershell
-Import-Module ./MotorFuelTaxFormats/MotorFuelTaxFormats.psd1
+Install-Module MotorFuelTaxFormats -Scope CurrentUser
+Import-Module MotorFuelTaxFormats
 ```
 
 ## Convert Florida records
