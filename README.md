@@ -163,7 +163,7 @@ Import-Csv ./tn-records.csv |
 
 The first worksheet is preserved, and data starts at row 4 in the template's sixteen-column schedule layout. The caller owns both paths; no production template, filing identity, or filename is built into the module.
 
-All seven states have passed private equivalence checks against real settled filings. Text outputs were compared byte for byte; Tennessee workbook cells were compared semantically because XLSX container bytes are not stable.
+All seven states have passed private equivalence checks for one filer and one real settled filing period. Text outputs were compared byte for byte; Tennessee workbook cells were compared semantically because XLSX container bytes are not stable.
 
 ## Test
 
