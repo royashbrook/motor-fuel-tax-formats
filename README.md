@@ -163,6 +163,8 @@ Import-Csv ./tn-records.csv |
 
 The first worksheet is preserved, and data starts at row 4 in the template's sixteen-column schedule layout. The caller owns both paths; no production template, filing identity, or filename is built into the module.
 
+Tennessee is format-tested but has not been equivalence-checked against a real settled filing because its authorized workbook template is deliberately not distributed. The other six states have passed private byte-for-byte checks against real settled filings.
+
 ## Test
 
 ```powershell
