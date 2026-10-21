@@ -163,6 +163,16 @@ Import-Csv ./tn-records.csv |
 
 The first worksheet is preserved, and data starts at row 4 in the template's sixteen-column schedule layout. The caller owns both paths; no production template, filing identity, or filename is built into the module.
 
+## Louisiana
+
+Louisiana writes the Motor Fuel Transporter report's Schedule G (R-5348) detail and the totals for the return (R-5346) as a new workbook. Louisiana publishes no upload layout, so the `Schedule G` sheet uses the form's own columns and the `Summary` sheet totals net gallons by schedule type and product. Schedule types are `23` (into Louisiana), `24` (out of Louisiana) and `25` (solely within Louisiana). Rows are sorted the way the paper pages are kept: schedule type, then product, then date.
+
+```powershell
+Import-Csv ./la-records.csv |
+    ConvertTo-MotorFuelTaxFile -State LA -Period '202609' -OutputPath ./202609.xlsx
+```
+
+Record fields: `schedule`, `bol`, `cmd_code`, `shipper.name`, `shipper.city`, `shipper.state`, `origin.id` (the terminal code or FEIN for where the fuel was removed), `consignee.name`, `consignee.city`, `consignee.state`, `shipped`, `net`. Louisiana is new and has not yet been compared against an accepted filing.
 ## Mississippi
 
 Mississippi writes the carrier report (schedule 14B, loads brought into the state) into the state's TAP Excel import template, on its `Carrier Receipts Disbursements` sheet from row 2. Every row must be schedule `14B`. The state takes a terminal code or a state for each leg, never both, so both the origin and the destination go by state and city and the terminal code columns stay empty. The purchaser is the consignee, reported by FEIN.

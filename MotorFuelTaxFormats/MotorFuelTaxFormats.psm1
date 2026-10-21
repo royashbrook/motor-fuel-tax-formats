@@ -601,6 +601,77 @@ function ConvertTo-MississippiWorkbook {
     }
 }
 
+function ConvertTo-LouisianaWorkbook {
+    param(
+        [Parameter(Mandatory)] [object[]] $Records,
+        [Parameter(Mandatory)] [string] $OutputPath
+    )
+
+    # the transporter report, R-5346, with its Schedule G (R-5348) detail: 23 into Louisiana, 24 out
+    # of it, 25 solely within it, one product per page on paper. Louisiana publishes no upload
+    # layout, so this is the form's own columns, one sheet of rows and one of the totals the
+    # return carries, sorted the way the pages are kept.
+    Import-Module ImportExcel -MinimumVersion 7.8.10 -ErrorAction Stop
+    $rows = foreach ($item in $Records) {
+        $schedule = [string](Get-RequiredRecordValue $item 'schedule')
+        if ($schedule -notin '23', '24', '25') {
+            throw "Louisiana Schedule G types are 23, 24 or 25, got '$schedule'."
+        }
+        $shipped = [datetimeoffset]::Parse(
+            [string](Get-RequiredRecordValue $item 'shipped'),
+            [Globalization.CultureInfo]::InvariantCulture
+        )
+        [pscustomobject]@{
+            Schedule    = $schedule
+            Product     = [string](Get-RequiredRecordValue $item 'cmd_code')
+            Date        = $shipped.DateTime.Date
+            Values      = @(
+                $schedule
+                [string](Get-RequiredRecordValue $item 'cmd_code')
+                'J'
+                $shipped.DateTime.Date
+                [string](Get-RequiredRecordValue $item 'shipper.name')
+                [string](Get-RequiredRecordValue $item 'shipper.city')
+                [string](Get-RequiredRecordValue $item 'shipper.state')
+                [string](Get-RequiredRecordValue $item 'origin.id')
+                [string](Get-RequiredRecordValue $item 'consignee.name')
+                [string](Get-RequiredRecordValue $item 'consignee.city')
+                [string](Get-RequiredRecordValue $item 'consignee.state')
+                [string](Get-RequiredRecordValue $item 'bol')
+                [int](Get-RequiredRecordValue $item 'net')
+            )
+        }
+    }
+    $rows = @($rows | Sort-Object Schedule, Product, Date)
+    if (Test-Path -LiteralPath $OutputPath) { Remove-Item -LiteralPath $OutputPath }
+    $package = Open-ExcelPackage -Path $OutputPath -Create
+    try {
+        $detail = Add-Worksheet -ExcelPackage $package -WorksheetName 'Schedule G'
+        $headers = @('Type of Schedule', 'Product Type', 'Mode of Transport', 'Date', 'Removed From Name',
+            'Removed From City', 'Removed From State', 'TCN/FEIN', 'Purchaser Name', 'Destination City',
+            'Destination State', 'Document Number', 'Net Gallons')
+        for ($column = 1; $column -le $headers.Count; $column++) { $detail.Cells[1, $column].Value = $headers[$column - 1] }
+        [int]$row = 2
+        foreach ($r in $rows) {
+            for ($column = 1; $column -le $r.Values.Count; $column++) { $detail.Cells[$row, $column].Value = $r.Values[$column - 1] }
+            $detail.Cells[$row, 4].Style.Numberformat.Format = 'mm/dd/yyyy'
+            $row++
+        }
+        $summary = Add-Worksheet -ExcelPackage $package -WorksheetName 'Summary'
+        @('Type of Schedule', 'Product Type', 'Net Gallons') | ForEach-Object -Begin { $c = 1 } -Process { $summary.Cells[1, $c].Value = $_; $c++ }
+        $row = 2
+        foreach ($g in @($rows | Group-Object Schedule, Product)) {
+            $summary.Cells[$row, 1].Value = $g.Group[0].Schedule
+            $summary.Cells[$row, 2].Value = $g.Group[0].Product
+            $summary.Cells[$row, 3].Value = [int](($g.Group | ForEach-Object { $_.Values[12] } | Measure-Object -Sum).Sum)
+            $row++
+        }
+    }
+    finally {
+        Close-ExcelPackage -ExcelPackage $package
+    }
+}
+
 function ConvertTo-MotorFuelTaxFile {
     <#
     .SYNOPSIS
@@ -616,7 +687,7 @@ function ConvertTo-MotorFuelTaxFile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateSet('AL', 'FL', 'KY', 'MS', 'NC', 'SC', 'TN', 'VA')]
+        [ValidateSet('AL', 'FL', 'KY', 'LA', 'MS', 'NC', 'SC', 'TN', 'VA')]
         [string] $State,
 
         [Parameter(Mandatory)]
@@ -663,6 +734,11 @@ function ConvertTo-MotorFuelTaxFile {
                 throw 'State TN requires TemplatePath.'
             }
             ConvertTo-TennesseeWorkbook -Records $records -TemplatePath $TemplatePath -OutputPath $resolvedOutputPath
+            return
+        }
+
+        if ($State -eq 'LA') {
+            ConvertTo-LouisianaWorkbook -Records $records -OutputPath $resolvedOutputPath
             return
         }
 

@@ -1,0 +1,4 @@
+schedule,bol,cmd_code,shipper.name,shipper.city,shipper.state,origin.id,consignee.name,consignee.city,consignee.state,shipped,net
+24,300003,065,Synthetic Terminal,Baton Rouge,LA,T72LA2001,Synthetic Station,Gulfport,MS,2026-07-20T08:00:00-05:00,8000
+23,300002,160,Synthetic Terminal,Mobile,AL,T63AL2001,Synthetic Depot,Slidell,LA,2026-07-15T08:00:00-05:00,7500
+23,300001,160,Synthetic Bulk Plant,Pensacola,FL,012345678,Synthetic Farm,Bogalusa,LA,2026-07-02T08:00:00-05:00,6000

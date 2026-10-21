@@ -249,6 +249,38 @@ Describe 'MotorFuelTaxFormats module' {
             Should -Throw '*schedule 14B*'
     }
 
+    It 'writes the Louisiana Schedule G rows in page order and the totals the transporter return carries' {
+        Import-Module ImportExcel -MinimumVersion 7.8.10
+        $outputPath = Join-Path $TestDrive 'la-output.xlsx'
+        Import-Csv (Join-Path $PSScriptRoot 'fixtures/la-records.csv') |
+            ConvertTo-MotorFuelTaxFile -State LA -Period '202607' -OutputPath $outputPath
+
+        $output = Open-ExcelPackage -Path $outputPath
+        try {
+            $detail = $output.Workbook.Worksheets['Schedule G'].Cells
+            $detail[1, 8].Value | Should -BeExactly 'TCN/FEIN'
+            @(2..4 | ForEach-Object { [string]$detail[$_, 12].Value }) | Should -Be @('300001', '300002', '300003')
+            @(1..13 | ForEach-Object {
+                $v = $detail[2, $_].Value
+                if ($_ -eq 4) { [datetime]::FromOADate([double]$v).ToString('yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture) } else { [string]$v }
+            }) -join ',' | Should -BeExactly '23,160,J,2026-07-02,Synthetic Bulk Plant,Pensacola,FL,012345678,Synthetic Farm,Bogalusa,LA,300001,6000'
+            $detail[2, 4].Style.Numberformat.Format | Should -BeExactly 'mm/dd/yyyy'
+            $summary = $output.Workbook.Worksheets['Summary'].Cells
+            @(2..3 | ForEach-Object { '{0}/{1}/{2}' -f $summary[$_, 1].Value, $summary[$_, 2].Value, $summary[$_, 3].Value }) |
+                Should -Be @('23/160/13500', '24/065/8000')
+        }
+        finally {
+            Close-ExcelPackage -ExcelPackage $output -NoSave
+        }
+    }
+
+    It 'refuses a Louisiana row that is not a Schedule G type' {
+        $row = (Import-Csv (Join-Path $PSScriptRoot 'fixtures/la-records.csv'))[0]
+        $row.schedule = '14B'
+        { $row | ConvertTo-MotorFuelTaxFile -State LA -Period '202607' -OutputPath (Join-Path $TestDrive 'la-bad.xlsx') } |
+            Should -Throw '*23, 24 or 25*'
+    }
+
     It 'contains no data-access, network, mail, or submission commands' {
         Get-Content $modulePath -Raw | Should -Not -Match '(?i)Invoke-Sqlcmd|Invoke-RestMethod|Invoke-WebRequest|New-WebServiceProxy|Send-Mail|Send-Mg|Publish-'
     }
