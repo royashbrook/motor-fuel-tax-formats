@@ -1,6 +1,6 @@
 @{
     RootModule = 'MotorFuelTaxFormats.psm1'
-    ModuleVersion = '0.1.1'
+    ModuleVersion = '0.2.0'
     GUID = '6a1e2fff-325b-454a-ad42-d0676d2ad1c7'
     Author = 'Roy Ashbrook'
     Copyright = '(c) 2026 Roy Ashbrook. Licensed under the MIT License.'
@@ -13,7 +13,7 @@
     AliasesToExport = @()
     PrivateData = @{
         PSData = @{
-            Tags = @('MotorFuel', 'Tax', 'Alabama', 'Florida', 'Kentucky', 'NorthCarolina', 'SouthCarolina', 'Tennessee', 'Virginia', 'Formatter')
+            Tags = @('MotorFuel', 'Tax', 'Alabama', 'Florida', 'Kentucky', 'Mississippi', 'NorthCarolina', 'SouthCarolina', 'Tennessee', 'Virginia', 'Formatter')
             ProjectUri = 'https://github.com/royashbrook/motor-fuel-tax-formats'
             LicenseUri = 'https://github.com/royashbrook/motor-fuel-tax-formats/blob/main/LICENSE'
         }

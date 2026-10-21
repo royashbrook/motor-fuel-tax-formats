@@ -1,0 +1,3 @@
+schedule,bol,cmd_code,shipper.tcn,shipper.state,shipper.city,consignee.state,consignee.city,consignee.name,consignee.tax_id,shipped,net
+14B,123456,065,T62TN2201,TN,Memphis,MS,Olive Branch,Synthetic Station,000123456,2026-07-03T06:15:00-05:00,8500
+14B,A12345,160,,AL,Mobile,MS,Pascagoula,Synthetic Depot,012345678,2026-07-31T23:30:00-05:00,7200

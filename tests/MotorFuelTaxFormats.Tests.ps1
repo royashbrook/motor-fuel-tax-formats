@@ -202,6 +202,53 @@ Describe 'MotorFuelTaxFormats module' {
         }
     }
 
+    It 'writes Mississippi carrier rows into the import sheet, the terminal code or the state and city per leg' {
+        Import-Module ImportExcel -MinimumVersion 7.8.10
+        $templatePath = Join-Path $TestDrive 'ms-template.xlsx'
+        $outputPath = Join-Path $TestDrive 'ms-output.xlsx'
+        $package = Open-ExcelPackage -Path $templatePath -Create
+        $null = Add-Worksheet -ExcelPackage $package -WorksheetName 'Instructions'
+        $worksheet = Add-Worksheet -ExcelPackage $package -WorksheetName 'Carrier Receipts Disbursements'
+        $worksheet.Cells[1, 1].Value = 'Bill of Lading'
+        Close-ExcelPackage -ExcelPackage $package
+
+        Import-Csv (Join-Path $PSScriptRoot 'fixtures/ms-records.csv') |
+            ConvertTo-MotorFuelTaxFile -State MS -Period '202607' -TemplatePath $templatePath -OutputPath $outputPath
+
+        $output = Open-ExcelPackage -Path $outputPath
+        try {
+            $sheet = $output.Workbook.Worksheets['Carrier Receipts Disbursements']
+            $sheet.Cells[1, 1].Value | Should -BeExactly 'Bill of Lading'
+            $actual = 2..3 | ForEach-Object {
+                $r = $_
+                (1..15 | ForEach-Object {
+                    $v = $sheet.Cells[$r, $_].Value
+                    if ($v -is [datetime]) { $v.ToString('yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture) }
+                    else { [Convert]::ToString($v, [Globalization.CultureInfo]::InvariantCulture) }
+                }) -join ','
+            }
+            $actual | Should -BeExactly @(Get-Content (Join-Path $PSScriptRoot 'fixtures/ms-expected.csv'))
+            $sheet.Cells[2, 3].Value | Should -BeOfType [string]
+            $sheet.Cells[2, 14].Style.Numberformat.Format | Should -BeExactly 'mm-dd-yy'
+        }
+        finally {
+            Close-ExcelPackage -ExcelPackage $output -NoSave
+        }
+    }
+
+    It 'refuses a Mississippi row that is not schedule 14B' {
+        Import-Module ImportExcel -MinimumVersion 7.8.10
+        $templatePath = Join-Path $TestDrive 'ms-template-14a.xlsx'
+        $package = Open-ExcelPackage -Path $templatePath -Create
+        $null = Add-Worksheet -ExcelPackage $package -WorksheetName 'Carrier Receipts Disbursements'
+        Close-ExcelPackage -ExcelPackage $package
+        $row = (Import-Csv (Join-Path $PSScriptRoot 'fixtures/ms-records.csv'))[0]
+        $row.schedule = '14A'
+
+        { $row | ConvertTo-MotorFuelTaxFile -State MS -Period '202607' -TemplatePath $templatePath -OutputPath (Join-Path $TestDrive 'ms-14a.xlsx') } |
+            Should -Throw '*schedule 14B*'
+    }
+
     It 'contains no data-access, network, mail, or submission commands' {
         Get-Content $modulePath -Raw | Should -Not -Match '(?i)Invoke-Sqlcmd|Invoke-RestMethod|Invoke-WebRequest|New-WebServiceProxy|Send-Mail|Send-Mg|Publish-'
     }

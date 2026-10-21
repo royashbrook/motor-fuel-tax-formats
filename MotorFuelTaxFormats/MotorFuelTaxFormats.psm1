@@ -543,6 +543,65 @@ function ConvertTo-TennesseeWorkbook {
     }
 }
 
+function ConvertTo-MississippiWorkbook {
+    param(
+        [Parameter(Mandatory)] [object[]] $Records,
+        [Parameter(Mandatory)] [string] $TemplatePath,
+        [Parameter(Mandatory)] [string] $OutputPath
+    )
+
+    # the TAP carrier import: one row per bill of lading on the Carrier Receipts Disbursements sheet,
+    # from row 2. the carrier report has one schedule, 14B, loads brought into Mississippi. a leg is
+    # its terminal code or, without one, its state and city, never both.
+    Import-Module ImportExcel -MinimumVersion 7.8.10 -ErrorAction Stop
+    Copy-Item -LiteralPath $TemplatePath -Destination $OutputPath -Force
+    $package = Open-ExcelPackage -Path $OutputPath
+    try {
+        $sheet = $package.Workbook.Worksheets['Carrier Receipts Disbursements']
+        if ($null -eq $sheet) {
+            throw "Template has no 'Carrier Receipts Disbursements' sheet."
+        }
+        $cells = $sheet.Cells
+        [int]$row = 2
+        foreach ($item in $Records) {
+            $schedule = [string](Get-RequiredRecordValue $item 'schedule')
+            if ($schedule -ne '14B') {
+                throw "Mississippi carrier rows are schedule 14B, got '$schedule'."
+            }
+            $tcn = [string](Get-RequiredRecordValue $item 'shipper.tcn')
+            $shipped = [datetimeoffset]::Parse(
+                [string](Get-RequiredRecordValue $item 'shipped'),
+                [Globalization.CultureInfo]::InvariantCulture
+            )
+            $values = @(
+                [string](Get-RequiredRecordValue $item 'bol')
+                $schedule
+                [string](Get-RequiredRecordValue $item 'cmd_code')
+                'J'
+                $tcn
+                $(if ($tcn) { '' } else { [string](Get-RequiredRecordValue $item 'shipper.state') })
+                $(if ($tcn) { '' } else { [string](Get-RequiredRecordValue $item 'shipper.city') })
+                ''
+                [string](Get-RequiredRecordValue $item 'consignee.state')
+                [string](Get-RequiredRecordValue $item 'consignee.city')
+                [string](Get-RequiredRecordValue $item 'consignee.name')
+                'FEIN'
+                [string](Get-RequiredRecordValue $item 'consignee.tax_id')
+                $shipped.DateTime.Date
+                [int](Get-RequiredRecordValue $item 'net')
+            )
+            for ($column = 1; $column -le $values.Count; $column++) {
+                $cells[$row, $column].Value = $values[$column - 1]
+            }
+            $cells[$row, 14].Style.Numberformat.Format = 'mm-dd-yy'
+            $row++
+        }
+    }
+    finally {
+        Close-ExcelPackage -ExcelPackage $package
+    }
+}
+
 function ConvertTo-MotorFuelTaxFile {
     <#
     .SYNOPSIS
@@ -558,7 +617,7 @@ function ConvertTo-MotorFuelTaxFile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateSet('AL', 'FL', 'KY', 'NC', 'SC', 'TN', 'VA')]
+        [ValidateSet('AL', 'FL', 'KY', 'MS', 'NC', 'SC', 'TN', 'VA')]
         [string] $State,
 
         [Parameter(Mandatory)]
@@ -605,6 +664,14 @@ function ConvertTo-MotorFuelTaxFile {
                 throw 'State TN requires TemplatePath.'
             }
             ConvertTo-TennesseeWorkbook -Records $records -TemplatePath $TemplatePath -OutputPath $resolvedOutputPath
+            return
+        }
+
+        if ($State -eq 'MS') {
+            if (-not $PSBoundParameters.ContainsKey('TemplatePath')) {
+                throw 'State MS requires TemplatePath.'
+            }
+            ConvertTo-MississippiWorkbook -Records $records -TemplatePath $TemplatePath -OutputPath $resolvedOutputPath
             return
         }
 
