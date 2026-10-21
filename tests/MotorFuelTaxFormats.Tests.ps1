@@ -202,7 +202,7 @@ Describe 'MotorFuelTaxFormats module' {
         }
     }
 
-    It 'writes Mississippi carrier rows into the import sheet, the terminal code or the state and city per leg' {
+    It 'writes Mississippi carrier rows into the import sheet, each leg by state and city, never a terminal code' {
         Import-Module ImportExcel -MinimumVersion 7.8.10
         $templatePath = Join-Path $TestDrive 'ms-template.xlsx'
         $outputPath = Join-Path $TestDrive 'ms-output.xlsx'

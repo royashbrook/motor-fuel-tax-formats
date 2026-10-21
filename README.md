@@ -165,7 +165,7 @@ The first worksheet is preserved, and data starts at row 4 in the template's six
 
 ## Mississippi
 
-Mississippi writes the carrier report (schedule 14B, loads brought into the state) into the state's TAP Excel import template, on its `Carrier Receipts Disbursements` sheet from row 2. Every row must be schedule `14B`. A leg is its terminal code when `shipper.tcn` has one, or its state and city when it does not, never both; the destination is always its state and city. The purchaser is the consignee, reported by FEIN.
+Mississippi writes the carrier report (schedule 14B, loads brought into the state) into the state's TAP Excel import template, on its `Carrier Receipts Disbursements` sheet from row 2. Every row must be schedule `14B`. The state takes a terminal code or a state for each leg, never both, so both the origin and the destination go by state and city and the terminal code columns stay empty. The purchaser is the consignee, reported by FEIN.
 
 ```powershell
 Import-Csv ./ms-records.csv |
@@ -175,7 +175,7 @@ Import-Csv ./ms-records.csv |
         -OutputPath ./202609.xlsx
 ```
 
-Record fields: `schedule`, `bol`, `cmd_code`, `shipper.tcn`, `shipper.state`, `shipper.city`, `consignee.state`, `consignee.city`, `consignee.name`, `consignee.tax_id`, `shipped`, `net`. Mississippi is new and has not yet been compared against an accepted filing.
+Record fields: `schedule`, `bol`, `cmd_code`, `shipper.state`, `shipper.city`, `consignee.state`, `consignee.city`, `consignee.name`, `consignee.tax_id`, `shipped`, `net`. Mississippi is new and has not yet been compared against an accepted filing.
 
 The seven states above Mississippi have passed private equivalence checks for one filer and one real settled filing period. Text outputs were compared byte for byte; Tennessee workbook cells were compared semantically because XLSX container bytes are not stable.
 

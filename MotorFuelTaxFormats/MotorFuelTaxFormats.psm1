@@ -551,8 +551,8 @@ function ConvertTo-MississippiWorkbook {
     )
 
     # the TAP carrier import: one row per bill of lading on the Carrier Receipts Disbursements sheet,
-    # from row 2. the carrier report has one schedule, 14B, loads brought into Mississippi. a leg is
-    # its terminal code or, without one, its state and city, never both.
+    # from row 2. the carrier report has one schedule, 14B, loads brought into Mississippi. the state
+    # takes a terminal code or a state for each leg, never both, so both legs go by state and city.
     Import-Module ImportExcel -MinimumVersion 7.8.10 -ErrorAction Stop
     Copy-Item -LiteralPath $TemplatePath -Destination $OutputPath -Force
     $package = Open-ExcelPackage -Path $OutputPath
@@ -568,7 +568,6 @@ function ConvertTo-MississippiWorkbook {
             if ($schedule -ne '14B') {
                 throw "Mississippi carrier rows are schedule 14B, got '$schedule'."
             }
-            $tcn = [string](Get-RequiredRecordValue $item 'shipper.tcn')
             $shipped = [datetimeoffset]::Parse(
                 [string](Get-RequiredRecordValue $item 'shipped'),
                 [Globalization.CultureInfo]::InvariantCulture
@@ -578,9 +577,9 @@ function ConvertTo-MississippiWorkbook {
                 $schedule
                 [string](Get-RequiredRecordValue $item 'cmd_code')
                 'J'
-                $tcn
-                $(if ($tcn) { '' } else { [string](Get-RequiredRecordValue $item 'shipper.state') })
-                $(if ($tcn) { '' } else { [string](Get-RequiredRecordValue $item 'shipper.city') })
+                ''
+                [string](Get-RequiredRecordValue $item 'shipper.state')
+                [string](Get-RequiredRecordValue $item 'shipper.city')
                 ''
                 [string](Get-RequiredRecordValue $item 'consignee.state')
                 [string](Get-RequiredRecordValue $item 'consignee.city')
